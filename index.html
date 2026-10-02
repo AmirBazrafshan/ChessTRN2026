@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Chess Tournament</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{font-family:sans-serif;background:#f4f4f4;color:#222;margin:0}
+header{background:#20252b;color:white;text-align:center;padding:22px}
+main{max-width:950px;margin:20px auto;padding:15px}
+.card{background:white;padding:20px;border-radius:14px;margin-bottom:20px}
+h2{text-align:center}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:center;padding:10px;border-bottom:1px solid #ddd}
+th{background:#ccc}
+.game{text-align:center;padding:12px;border-bottom:1px solid #eee;font-size:18px}
+.piece{font-size:32px}
+.round{text-align:center;font-weight:bold;background:#eee;padding:10px;margin-top:10px}
+button,select{padding:8px;margin:5px}
+</style>
+</head>
+<body>
+<header><h1>تورنمنت شطرنج</h1><p>Round Robin - Double</p></header>
+<main>
+<div class="card"><h2>جدول رده‌بندی</h2>
+<table>
+<thead>
+<tr>
+<th>رتبه</th>
+<th>بازیکن</th>
+<th>بازی</th>
+<th>برد</th>
+<th>مساوی</th>
+<th>باخت</th>
+<th>امتیاز</th>
+</tr>
+</thead>
+
+<tbody id="table"></tbody>
+
+</table>
+<div class="card"><h2>بازی‌ها</h2><div id="games"></div></div>
+<div class="card"><h2>Moderator</h2>
+<select id="game"></select>
+
+<select id="result">
+<option value="">بدون نتیجه</option>
+<option value="0-1">0 - 1</option>
+<option value="0.5-0.5">0.5 - 0.5</option>
+<option value="1-0">1 - 0</option>
+</select>
+
+<button onclick="saveResult()">ثبت</button>
+</div>
+</main>
+<script>
+const db=supabase.createClient("https://lubnnqyhotmjsdkcinyx.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1Ym5ucXlob3RtanNka2Npbnl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NTI5MzIsImV4cCI6MjEwNjUyODkzMn0.Rnvv84w_4WlTsoaLZHeBHNRMNLrXKw3_East-qHQv6I");
+let games=[];
+const players=[
+"آقای اف‌آراف",
+"بهرامی",
+"کوکوشیبو",
+"محمودی",
+"لاشکودا"
+];
+const schedule=[
+[["آقای اف‌آراف","بهرامی"],["کوکوشیبو","محمودی"]],
+[["آقای اف‌آراف","لاشکودا"],["کوکوشیبو","بهرامی"]],
+[["محمودی","آقای اف‌آراف"],["بهرامی","لاشکودا"]],
+[["بهرامی","محمودی"],["لاشکودا","کوکوشیبو"]],
+[["لاشکودا","آقای اف‌آراف"],["کوکوشیبو","بهرامی"]]];
+function make(){let id=1;schedule.forEach((r,i)=>r.forEach(x=>games.push({id:id++,round:i+1,white:x[0],black:x[1]})));[...games].forEach(g=>games.push({id:id++,round:g.round+5,white:g.black,black:g.white}));}
+async function init(){let {data}=await db.from("games").select("*").order("id");if(!data||!data.length){make();await db.from("games").insert(games.map(g=>({white:g.white,black:g.black,round:g.round,result:null})))}let r=await db.from("games").select("*").order("id");games=r.data;render()}
+
+function render(){
+
+  // Render games
+  let h = "";
+  let last = 0;
+
+  games.forEach(g => {
+
+    if(g.round !== last){
+      last = g.round;
+      h += `<div class="round">دور ${last}</div>`;
+    }
+
+    h += `
+    <div class="game">
+      <span class="piece">♙</span>
+      ${g.white}
+      —
+      ${g.black}
+      <span class="piece">♟</span>
+      ${g.result || ""}
+    </div>`;
+  });
+
+  gamesEl.innerHTML = h;
+
+
+  // Moderator game list
+  game.innerHTML = games.map(g =>
+    `<option value="${g.id}">
+      دور ${g.round}: ${g.white} - ${g.black}
+    </option>`
+  ).join("");
+
+
+  // Ranking table
+  let stats = {};
+
+  players.forEach(p => {
+    stats[p] = {
+      name: p,
+      played: 0,
+      win: 0,
+      draw: 0,
+      loss: 0,
+      score: 0
+    };
+  });
+
+
+  games.forEach(g => {
+
+    if(!g.result) return;
+
+    stats[g.white].played++;
+    stats[g.black].played++;
+
+    if(g.result === "1-0"){
+      stats[g.white].win++;
+      stats[g.white].score += 1;
+      stats[g.black].loss++;
+    }
+
+    else if(g.result === "0-1"){
+      stats[g.black].win++;
+      stats[g.black].score += 1;
+      stats[g.white].loss++;
+    }
+
+    else if(g.result === "0.5-0.5"){
+      stats[g.white].draw++;
+      stats[g.black].draw++;
+      stats[g.white].score += 0.5;
+      stats[g.black].score += 0.5;
+    }
+
+  });
+
+
+  let table = Object.values(stats)
+  .sort((a,b)=>b.score-a.score)
+  .map((p,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${p.name}</td>
+      <td>${p.played}</td>
+      <td>${p.win}</td>
+      <td>${p.draw}</td>
+      <td>${p.loss}</td>
+      <td>${p.score}</td>
+    </tr>
+  `).join("");
+
+
+  document.getElementById("table").innerHTML = table;
+
+}
+
+async function saveResult(){
+
+  let id = Number(game.value);
+  let res = result.value || null;
+
+  // update local data immediately
+  let g = games.find(x => x.id === id);
+  if(g){
+    g.result = res;
+  }
+
+  render();
+
+  // save to Supabase in background
+  await db.from("games")
+  .update({result: res})
+  .eq("id", id);
+
+}
+
+
+const gamesEl=document.getElementById("games");init();
+</script>
+</body>
+</html>
