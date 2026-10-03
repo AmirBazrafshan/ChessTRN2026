@@ -57,19 +57,50 @@ button,select{padding:8px;margin:5px}
 const db=supabase.createClient("https://lubnnqyhotmjsdkcinyx.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1Ym5ucXlob3RtanNka2Npbnl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NTI5MzIsImV4cCI6MjEwNjUyODkzMn0.Rnvv84w_4WlTsoaLZHeBHNRMNLrXKw3_East-qHQv6I");
 let games=[];
 const players=[
-"آقای اف‌آراف",
+"اف‌آراف",
 "بهرامی",
 "کوکوشیبو",
-"محمودی",
+"محمودخان",
 "لاشکودا"
 ];
 const schedule=[
-[["آقای اف‌آراف","بهرامی"],["کوکوشیبو","محمودی"]],
-[["آقای اف‌آراف","لاشکودا"],["کوکوشیبو","بهرامی"]],
-[["محمودی","آقای اف‌آراف"],["بهرامی","لاشکودا"]],
-[["بهرامی","محمودی"],["لاشکودا","کوکوشیبو"]],
-[["لاشکودا","آقای اف‌آراف"],["کوکوشیبو","بهرامی"]]];
-function make(){let id=1;schedule.forEach((r,i)=>r.forEach(x=>games.push({id:id++,round:i+1,white:x[0],black:x[1]})));[...games].forEach(g=>games.push({id:id++,round:g.round+5,white:g.black,black:g.white}));}
+[["اف‌آراف","بهرامی"],["کوکوشیبو","محمودخان"]],
+[["اف‌آراف","لاشکودا"],["کوکوشیبو","بهرامی"]],
+[["محمودخان","اف‌آراف"],["بهرامی","لاشکودا"]],
+[["بهرامی","محمودخان"],["لاشکودا","کوکوشیبو"]],
+[["لاشکودا","محمودخان"],["کوکوشیبو","اف‌آراف"]]];
+
+
+function make(){
+
+  let id = 1;
+
+  schedule.forEach((r,i)=>{
+    r.forEach(x=>{
+      games.push({
+        id:id++,
+        round:i+1,
+        white:x[0],
+        black:x[1]
+      });
+    });
+  });
+
+
+  let firstHalf = [...games];
+
+  firstHalf.forEach(g=>{
+    games.push({
+      id:id++,
+      round:g.round+5,
+      white:g.black,
+      black:g.white
+    });
+  });
+
+}
+
+
 async function init(){let {data}=await db.from("games").select("*").order("id");if(!data||!data.length){make();await db.from("games").insert(games.map(g=>({white:g.white,black:g.black,round:g.round,result:null})))}let r=await db.from("games").select("*").order("id");games=r.data;render()}
 
 function render(){
