@@ -40,7 +40,10 @@ button,select{padding:8px;margin:5px}
 
 </table>
 <div class="card"><h2>بازی‌ها</h2><div id="games"></div></div>
-<div class="card"><h2>Moderator</h2>
+
+<div class="card" id="moderator" style="display:none">
+<h2>Moderator</h2>
+
 <select id="game"></select>
 
 <select id="result">
@@ -52,6 +55,15 @@ button,select{padding:8px;margin:5px}
 
 <button onclick="saveResult()">ثبت</button>
 </div>
+
+<div class="card" id="loginBox">
+<h2>ورود مدیر</h2>
+<input id="password" type="password" placeholder="رمز">
+<button onclick="login()">ورود</button>
+</div>
+
+
+
 </main>
 <script>
 const db=supabase.createClient("https://lubnnqyhotmjsdkcinyx.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1Ym5ucXlob3RtanNka2Npbnl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NTI5MzIsImV4cCI6MjEwNjUyODkzMn0.Rnvv84w_4WlTsoaLZHeBHNRMNLrXKw3_East-qHQv6I");
@@ -218,6 +230,21 @@ async function saveResult(){
   await db.from("games")
   .update({result: res})
   .eq("id", id);
+
+}
+
+
+function login(){
+
+  let pass = document.getElementById("password").value;
+
+  if(pass === "1234"){
+    document.getElementById("moderator").style.display="block";
+    document.getElementById("loginBox").style.display="none";
+  }
+  else{
+    alert("رمز اشتباه است");
+  }
 
 }
 
